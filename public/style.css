@@ -1,0 +1,41 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  padding-top: 50px;
+}
+
+.container {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  width: 400px;
+  text-align: center;
+}
+
+h1, h2 {
+  color: #333;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+input[type="file"] {
+  margin-bottom: 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li a {
+  text-decoration: none;
+  color: #007BFF;
+}
+li a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,25 @@
+{
+  "name": "tempfileshare",
+  "version": "1.0.0",
+  "description": "Temporary file-sharing web app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "file",
+    "share",
+    "temporary",
+    "upload",
+    "node"
+  ],
+  "author": "YourName",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.4-lts.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
