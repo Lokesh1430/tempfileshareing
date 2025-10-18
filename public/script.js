@@ -16,12 +16,11 @@ async function fetchFiles() {
   const list = document.getElementById('fileList');
   list.innerHTML = '';
 
-  const now = Date.now();
   files.forEach(file => {
     const li = document.createElement('li');
     const link = document.createElement('a');
-    link.href = file.url ? file.url : `/download/${file.name}`;
-    link.innerText = file.name ? file.name : file;
+    link.href = `/download/${file.name}`;
+    link.innerText = file.name;
     li.appendChild(link);
 
     const expiry = document.createElement('span');
@@ -29,9 +28,10 @@ async function fetchFiles() {
     li.appendChild(expiry);
     list.appendChild(li);
 
-    const timestamp = file.timestamp ? file.timestamp : parseInt(file.name.split('-')[0]);
+    // Update remaining time every second
     function updateExpiry() {
-      const remaining = Math.max(0, 10*60 - Math.floor((Date.now()-timestamp)/1000));
+      const now = Date.now();
+      const remaining = Math.max(0, 30*60 - Math.floor((now - file.timestamp)/1000));
       const min = Math.floor(remaining/60);
       const sec = remaining%60;
       expiry.innerText = `expires in ${min}:${sec.toString().padStart(2,'0')} min`;
@@ -42,6 +42,7 @@ async function fetchFiles() {
 }
 fetchFiles();
 setInterval(fetchFiles, 10000);
+
 
 // ---------- 3D Card Tilt + Glow ----------
 const card = document.getElementById('card3D');
