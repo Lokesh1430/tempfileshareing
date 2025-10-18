@@ -7,12 +7,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static('public'));
+app.use(express.json());
 
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
-
-// Store uploaded file info with timestamp
-const filesMetaPath = path.join(__dirname, 'files.json');
-if (!fs.existsSync(filesMetaPath)) fs.writeFileSync(filesMetaPath, JSON.stringify([]));
+if (!fs.existsSync('urls.json')) fs.writeFileSync('urls.json', '[]');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -20,42 +18,48 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Upload endpoint
 app.post('/upload', upload.single('file'), (req, res) => {
-  const filesMeta = JSON.parse(fs.readFileSync(filesMetaPath));
-  filesMeta.unshift({ name: req.file.filename, timestamp: Date.now() });
-  fs.writeFileSync(filesMetaPath, JSON.stringify(filesMeta));
   res.sendStatus(200);
 });
 
-// Return files with timestamp
-app.get('/files', (req, res) => {
-  let filesMeta = [];
-  try {
-    filesMeta = JSON.parse(fs.readFileSync(filesMetaPath));
-    // Filter out deleted files
-    filesMeta = filesMeta.filter(f => fs.existsSync(path.join('uploads', f.name)));
-  } catch (err) { filesMeta = []; }
-  res.json(filesMeta);
+app.post('/add-url', (req, res)=>{
+  const { url } = req.body;
+  if(!url) return res.status(400).json({error:'No URL provided'});
+
+  const urls = JSON.parse(fs.readFileSync('urls.json'));
+  urls.push({ name: url.split('/').pop(), url, timestamp: Date.now(), isUrl:true });
+  fs.writeFileSync('urls.json', JSON.stringify(urls));
+  res.json({success:true});
 });
 
-// Download file
-app.get('/download/:filename', (req, res) => {
+app.get('/files', (req,res)=>{
+  const files = fs.readdirSync('uploads').map(f=> {
+    const stats = fs.statSync(path.join('uploads', f));
+    return { name: f, originalName: f.split('-').slice(1).join('-'), timestamp: stats.mtimeMs };
+  });
+  const urls = JSON.parse(fs.readFileSync('urls.json'));
+  const all = [...urls, ...files].sort((a,b)=>b.timestamp-a.timestamp);
+  res.json(all);
+});
+
+app.get('/download/:filename', (req,res)=>{
   const filePath = path.join('uploads', req.params.filename);
   fs.existsSync(filePath) ? res.download(filePath) : res.status(404).send('File not found');
 });
 
-// Auto-delete files older than 30 mins
-setInterval(() => {
+// Auto-delete files and URLs older than 30 min
+setInterval(()=>{
   const now = Date.now();
-  let filesMeta = JSON.parse(fs.readFileSync(filesMetaPath));
-  filesMeta.forEach(f => {
-    const filePath = path.join('uploads', f.name);
-    if (now - f.timestamp > 30 * 60 * 1000 && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  // delete files
+  fs.readdirSync('uploads').forEach(f=>{
+    const filePath = path.join('uploads', f);
+    const stats = fs.statSync(filePath);
+    if(now - stats.mtimeMs > 30*60*1000) fs.unlinkSync(filePath);
   });
-  // Remove deleted files from metadata
-  filesMeta = filesMeta.filter(f => fs.existsSync(path.join('uploads', f.name)));
-  fs.writeFileSync(filesMetaPath, JSON.stringify(filesMeta));
-}, 60 * 1000);
+  // delete URLs
+  const urls = JSON.parse(fs.readFileSync('urls.json'));
+  const filtered = urls.filter(u => now - u.timestamp <= 30*60*1000);
+  fs.writeFileSync('urls.json', JSON.stringify(filtered));
+}, 60*1000);
 
-app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', ()=>console.log(`✅ Server running on port ${PORT}`));
