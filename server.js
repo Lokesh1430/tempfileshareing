@@ -46,21 +46,27 @@ app.get('/download/:filename', (req,res)=>{
   const filePath = path.join('uploads', req.params.filename);
   fs.existsSync(filePath) ? res.download(filePath) : res.status(404).send('File not found');
 });
-
-// Auto-delete files and URLs older than 30 min
-setInterval(()=>{
+// Auto-delete files and URLs older than 24 hours
+setInterval(() => {
   const now = Date.now();
-  // delete files
-  fs.readdirSync('uploads').forEach(f=>{
+  const EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
+
+  // Delete old files
+  fs.readdirSync('uploads').forEach(f => {
     const filePath = path.join('uploads', f);
     const stats = fs.statSync(filePath);
-    if(now - stats.mtimeMs > 24*60*60*1000) fs.unlinkSync(filePath);
+    if (now - stats.mtimeMs > EXPIRY_TIME) {
+      fs.unlinkSync(filePath);
+      console.log(`🗑 Deleted file: ${f}`);
+    }
   });
-  // delete URLs
+
+  // Delete old URLs
   const urls = JSON.parse(fs.readFileSync('urls.json'));
-  const filtered = urls.filter(u => now - u.timestamp <= 30*60*1000);
+  const filtered = urls.filter(u => now - u.timestamp <= EXPIRY_TIME);
   fs.writeFileSync('urls.json', JSON.stringify(filtered));
-}, 60*60*1000);
+
+}, 60 * 60 * 1000); // run every 1 hour
 
 
 app.listen(PORT, '0.0.0.0', ()=>console.log(`✅ Server running at http://localhost:${PORT}`));
