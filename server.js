@@ -54,12 +54,13 @@ setInterval(()=>{
   fs.readdirSync('uploads').forEach(f=>{
     const filePath = path.join('uploads', f);
     const stats = fs.statSync(filePath);
-    if(now - stats.mtimeMs > 30*60*1000) fs.unlinkSync(filePath);
+    if(now - stats.mtimeMs > 24*60*60*1000) fs.unlinkSync(filePath);
   });
   // delete URLs
   const urls = JSON.parse(fs.readFileSync('urls.json'));
   const filtered = urls.filter(u => now - u.timestamp <= 30*60*1000);
   fs.writeFileSync('urls.json', JSON.stringify(filtered));
-}, 60*1000);
+}, 60*60*1000);
+
 
 app.listen(PORT, '0.0.0.0', ()=>console.log(`✅ Server running at http://localhost:${PORT}`));
