@@ -31,17 +31,28 @@ async function fetchFiles(){
     list.appendChild(li);
 
     function updateExpiry(){
-      const now = Date.now();
-      const remaining = Math.max(0, 30*60 - Math.floor((now - file.timestamp)/1000));
-      const min = Math.floor(remaining/60);
-      const sec = remaining%60;
-      expiry.innerText = `expires in ${min}:${sec.toString().padStart(2,'0')} min`;
-    }
+  const now = Date.now();
+
+  // total remaining seconds (24 hours)
+  const remainingSeconds = Math.max(
+    0,
+    24 * 60 * 60 - Math.floor((now - file.timestamp) / 1000)
+    );
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
+
+    expiry.innerText =
+      `expires in ${hours.toString().padStart(2,'0')}:` +
+      `${minutes.toString().padStart(2,'0')}:` +
+      `${seconds.toString().padStart(2,'0')}`;
+  }
+
 
     updateExpiry(); // initial
     const interval = setInterval(()=>{
       updateExpiry();
-      if(Date.now() - file.timestamp >= 30*60*1000) clearInterval(interval);
+      if(Date.now() - file.timestamp >= 24 * 60 * 60 * 1000) clearInterval(interval);
     },1000);
   });
 }
